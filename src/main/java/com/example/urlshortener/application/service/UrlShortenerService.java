@@ -7,6 +7,7 @@ import com.example.urlshortener.domain.port.out.EventPublisherPort;
 import com.example.urlshortener.domain.port.out.UrlRepositoryPort;
 import com.example.urlshortener.domain.util.Base62Encoder;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ public class UrlShortenerService {
     public UrlMapping shortenUrl(String originalUrl) {
         UrlMapping initialMapping = UrlMapping.builder()
                 .originalUrl(originalUrl)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(ZoneId.systemDefault()))
                 .clickCount(0)
                 .build();
 
@@ -63,7 +64,7 @@ public class UrlShortenerService {
                 .shortCode(shortCode)
                 .ipAddress(ipAddress)
                 .userAgent(userAgent)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneId.systemDefault()))
                 .build();
         eventPublisher.publishClickEvent(event);
     }
