@@ -40,6 +40,8 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           mvn sonar:sonar \
+            -Dsonar.host.url="${SONAR_HOST_URL:-http://178.18.245.9:9000}" \
+            -Dsonar.token="${SONAR_TOKEN}" \
             -Dsonar.projectKey=url-shortener \
             -Dsonar.projectName="URL Shortener" \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml

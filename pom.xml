@@ -21,7 +21,7 @@
         <lombok.version>1.18.36</lombok.version>
         <testcontainers.version>1.20.1</testcontainers.version>
         <sonar.organization>my-org</sonar.organization>
-        <sonar.host.url>http://localhost:9000</sonar.host.url>
+        <sonar.host.url>http://178.18.245.9:9000</sonar.host.url>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <spotless.version>2.43.0</spotless.version>
     </properties>
