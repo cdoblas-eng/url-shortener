@@ -1,0 +1,29 @@
+:80 {
+    # Set web root to static build output
+    root * /usr/share/caddy
+
+    # Enable compression
+    encode zstd gzip
+
+    # Proxy REST API requests to Spring Boot backend container
+    handle /api/* {
+        reverse_proxy app:8080
+    }
+
+    # Proxy Actuator health checks
+    handle /actuator/* {
+        reverse_proxy app:8080
+    }
+
+    # Proxy short URL redirection codes (e.g., /b, /x7z) to Spring Boot
+    @shortCodePath path_regexp shortCode ^/[a-zA-Z0-9]+$
+    handle @shortCodePath {
+        reverse_proxy app:8080
+    }
+
+    # Fallback to index.html for Single Page Application client-side routing
+    handle {
+        try_files {path} /index.html
+        file_server
+    }
+}
