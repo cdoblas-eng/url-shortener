@@ -1,11 +1,11 @@
 # URL Shortener Service
 
-[![Java Version](https://img.shields.io/badge/Java-25-orange.svg)](https://openjdk.org/)
+[![Java Version](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Architecture](https://img.shields.io/badge/Architecture-Hexagonal%20%2F%20Ports%20%26%20Adapters-blue.svg)](#architecture)
 [![Build & SonarQube](https://github.com/cdoblas-eng/url-shortener/actions/workflows/ci.yml/badge.svg)](https://github.com/cdoblas-eng/url-shortener/actions/workflows/ci.yml)
 
-A high-performance, scalable, and resilient **URL Shortener Microservice** built with modern **Java 25** and **Spring Boot 4**. Designed using **Hexagonal Architecture (Ports & Adapters)**, this application provides ultra-fast URL redirection, multi-tier caching with Redis, asynchronous analytics streaming with Apache Kafka, and relational persistence with PostgreSQL.
+A high-performance, scalable, and resilient **URL Shortener Microservice** built with modern **Java 21** and **Spring Boot 4**. Designed using **Hexagonal Architecture (Ports & Adapters)**, this application provides ultra-fast URL redirection, multi-tier caching with Redis, asynchronous analytics streaming with Apache Kafka, and relational persistence with PostgreSQL.
 
 ---
 
@@ -47,7 +47,7 @@ src/main/java/com/example/urlshortener/
 
 | Category | Technology | Description |
 |---|---|---|
-| **Language** | **Java 25** | Latest Java LTS platform features & virtual threads. |
+| **Language** | **Java 21 (LTS)** | Platform features & virtual threads LTS. |
 | **Framework** | **Spring Boot 4.1.0** | Core application framework (Spring Web, JPA, Cache, Kafka, Actuator). |
 | **Database** | **PostgreSQL** | Primary relational datastore for persistent URL mappings. |
 | **Cache Layer** | **Redis** | In-memory key-value cache for ultra-fast redirection lookups. |
