@@ -2,7 +2,11 @@ import type { UrlMapping, UrlStatsResponse } from '../types/url';
 
 const API_BASE = '/api/v1/urls';
 
-export const shortenUrlApi = async (originalUrl: string, customAlias?: string): Promise<UrlMapping> => {
+export const shortenUrlApi = async (
+  originalUrl: string,
+  customAlias?: string,
+  expiresAt?: string
+): Promise<UrlMapping> => {
   try {
     const response = await fetch(`${API_BASE}/shorten`, {
       method: 'POST',
@@ -12,6 +16,7 @@ export const shortenUrlApi = async (originalUrl: string, customAlias?: string): 
       body: JSON.stringify({
         originalUrl,
         customAlias: customAlias && customAlias.trim().length > 0 ? customAlias.trim() : undefined,
+        expiresAt: expiresAt && expiresAt.trim().length > 0 ? expiresAt.trim() : undefined,
       }),
     });
 
@@ -40,14 +45,32 @@ export const shortenUrlApi = async (originalUrl: string, customAlias?: string): 
       originalUrl,
       shortCode: mockShortCode,
       createdAt: new Date().toISOString(),
+      expiresAt: expiresAt,
       clickCount: 0,
     };
 
-    const existingStr = localStorage.getItem('demo_url_mappings');
-    const existing: UrlMapping[] = existingStr ? JSON.parse(existingStr) : [];
-    localStorage.setItem('demo_url_mappings', JSON.stringify([mockMapping, ...existing]));
-
     return mockMapping;
+  }
+};
+
+export const deleteUrlApi = async (shortCode: string): Promise<void> => {
+  try {
+    const response = await fetch(`${API_BASE}/${shortCode}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok && response.status !== 404) {
+      const errorJson = await response.json().catch(() => null);
+      if (errorJson && errorJson.message) {
+        throw new Error(errorJson.message);
+      }
+      throw new Error(`Failed to delete URL: ${response.statusText}`);
+    }
+  } catch (error: any) {
+    if (error && error.message && !error.message.includes('Failed to fetch') && !error.message.includes('NetworkError')) {
+      throw error;
+    }
+    console.warn('Backend API unavailable for deleteUrlApi, proceeding with local removal:', error);
   }
 };
 

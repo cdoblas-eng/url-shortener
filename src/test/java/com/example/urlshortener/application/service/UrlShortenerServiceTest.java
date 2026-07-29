@@ -2,11 +2,14 @@ package com.example.urlshortener.application.service;
 
 import com.example.urlshortener.domain.exception.CustomAliasAlreadyExistsException;
 import com.example.urlshortener.domain.exception.InvalidCustomAliasException;
+import com.example.urlshortener.domain.exception.UrlExpiredException;
 import com.example.urlshortener.domain.model.ClickEvent;
 import com.example.urlshortener.domain.model.UrlMapping;
 import com.example.urlshortener.domain.port.out.CachePort;
 import com.example.urlshortener.domain.port.out.EventPublisherPort;
 import com.example.urlshortener.domain.port.out.UrlRepositoryPort;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +44,43 @@ class UrlShortenerServiceTest {
         assertEquals(customAlias, mapping.getShortCode());
         assertEquals(originalUrl, mapping.getOriginalUrl());
         assertEquals(Optional.of(originalUrl), cachePort.get(customAlias));
+    }
+
+    @Test
+    void deleteUrl_removesFromRepositoryAndCache_freesAlias() {
+        String originalUrl = "https://example.com/long-page";
+        String customAlias = "alias-to-delete";
+
+        urlShortenerService.shortenUrl(originalUrl, customAlias);
+        assertTrue(cachePort.get(customAlias).isPresent());
+
+        urlShortenerService.deleteUrl(customAlias);
+
+        assertFalse(cachePort.get(customAlias).isPresent());
+        assertFalse(urlRepository.findByShortCode(customAlias).isPresent());
+
+        // Alias can now be reused!
+        UrlMapping reused = urlShortenerService.shortenUrl("https://newsite.com", customAlias);
+        assertEquals(customAlias, reused.getShortCode());
+    }
+
+    @Test
+    void getOriginalUrl_whenExpired_throwsUrlExpiredException() {
+        String originalUrl = "https://example.com/long-page";
+        String customAlias = "expired-link";
+        LocalDateTime pastDate = LocalDateTime.now().minusDays(1);
+
+        UrlMapping mapping = UrlMapping.builder()
+                .originalUrl(originalUrl)
+                .shortCode(customAlias)
+                .createdAt(LocalDateTime.now().minusDays(2))
+                .expiresAt(pastDate)
+                .build();
+        urlRepository.save(mapping);
+
+        assertThrows(UrlExpiredException.class, () ->
+                urlShortenerService.getOriginalUrlAndTrackClick(customAlias, "127.0.0.1", "agent")
+        );
     }
 
     @Test
@@ -102,6 +142,11 @@ class UrlShortenerServiceTest {
                 mapping.setClickCount(mapping.getClickCount() + 1);
             }
         }
+
+        @Override
+        public void deleteByShortCode(String shortCode) {
+            db.remove(shortCode);
+        }
     }
 
     static class FakeCachePort implements CachePort {
@@ -115,6 +160,16 @@ class UrlShortenerServiceTest {
         @Override
         public void put(String shortCode, String originalUrl) {
             cache.put(shortCode, originalUrl);
+        }
+
+        @Override
+        public void put(String shortCode, String originalUrl, Duration ttl) {
+            cache.put(shortCode, originalUrl);
+        }
+
+        @Override
+        public void evict(String shortCode) {
+            cache.remove(shortCode);
         }
     }
 

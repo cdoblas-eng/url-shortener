@@ -24,11 +24,14 @@ public class UrlMappingEntity {
     @Column(nullable = false, length = 2048)
     private String originalUrl;
 
-    @Column(unique = true, length = 10)
+    @Column(unique = true, length = 64)
     private String shortCode;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "expires_at", nullable = true)
+    private LocalDateTime expiresAt;
 
     @Column(nullable = false)
     private long clickCount;

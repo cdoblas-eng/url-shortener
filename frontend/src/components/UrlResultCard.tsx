@@ -62,7 +62,7 @@ export const UrlResultCard: React.FC<UrlResultCardProps> = ({ mapping, onViewAna
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto mb-10 px-4">
+    <div id="result-card" className="w-full max-w-4xl mx-auto mb-10 px-4">
       <div className="glass-card glass-card-hover rounded-3xl p-5 sm:p-8 border border-purple-500/30 relative">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           

@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -13,4 +15,5 @@ public class ShortenUrlResponse {
     private String originalUrl;
     private String shortCode;
     private String shortUrl;
+    private LocalDateTime expiresAt;
 }

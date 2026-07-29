@@ -7,4 +7,5 @@ public interface UrlRepositoryPort {
     UrlMapping save(UrlMapping urlMapping);
     Optional<UrlMapping> findByShortCode(String shortCode);
     void incrementClickCount(String shortCode);
+    void deleteByShortCode(String shortCode);
 }

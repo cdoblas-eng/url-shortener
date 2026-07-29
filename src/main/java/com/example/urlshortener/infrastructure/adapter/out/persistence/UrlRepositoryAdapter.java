@@ -31,12 +31,19 @@ public class UrlRepositoryAdapter implements UrlRepositoryPort {
         repository.incrementClickCount(shortCode);
     }
 
+    @Override
+    @Transactional
+    public void deleteByShortCode(String shortCode) {
+        repository.deleteByShortCode(shortCode);
+    }
+
     private UrlMappingEntity toEntity(UrlMapping domain) {
         return UrlMappingEntity.builder()
                 .id(domain.getId())
                 .originalUrl(domain.getOriginalUrl())
                 .shortCode(domain.getShortCode())
                 .createdAt(domain.getCreatedAt())
+                .expiresAt(domain.getExpiresAt())
                 .clickCount(domain.getClickCount())
                 .build();
     }
@@ -47,6 +54,7 @@ public class UrlRepositoryAdapter implements UrlRepositoryPort {
                 .originalUrl(entity.getOriginalUrl())
                 .shortCode(entity.getShortCode())
                 .createdAt(entity.getCreatedAt())
+                .expiresAt(entity.getExpiresAt())
                 .clickCount(entity.getClickCount())
                 .build();
     }

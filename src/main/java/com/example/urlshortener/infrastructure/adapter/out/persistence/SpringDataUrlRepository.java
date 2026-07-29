@@ -11,4 +11,6 @@ public interface SpringDataUrlRepository extends JpaRepository<UrlMappingEntity,
     @Modifying
     @Query("UPDATE UrlMappingEntity u SET u.clickCount = u.clickCount + 1 WHERE u.shortCode = :shortCode")
     void incrementClickCount(String shortCode);
+
+    void deleteByShortCode(String shortCode);
 }

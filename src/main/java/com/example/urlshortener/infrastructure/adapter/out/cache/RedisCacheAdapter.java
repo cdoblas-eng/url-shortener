@@ -16,12 +16,22 @@ public class RedisCacheAdapter implements CachePort {
 
     @Override
     public void put(String shortCode, String originalUrl) {
-        redisTemplate.opsForValue().set("url:" + shortCode, originalUrl, CACHE_TTL);
+        put(shortCode, originalUrl, CACHE_TTL);
+    }
+
+    @Override
+    public void put(String shortCode, String originalUrl, Duration ttl) {
+        redisTemplate.opsForValue().set("url:" + shortCode, originalUrl, ttl);
     }
 
     @Override
     public Optional<String> get(String shortCode) {
         String value = redisTemplate.opsForValue().get("url:" + shortCode);
         return Optional.ofNullable(value);
+    }
+
+    @Override
+    public void evict(String shortCode) {
+        redisTemplate.delete("url:" + shortCode);
     }
 }

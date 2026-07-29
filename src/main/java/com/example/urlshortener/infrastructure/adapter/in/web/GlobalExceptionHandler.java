@@ -9,8 +9,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.example.urlshortener.domain.exception.UrlExpiredException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(UrlExpiredException.class)
+    public ResponseEntity<Map<String, Object>> handleUrlExpired(UrlExpiredException ex) {
+        return ResponseEntity.status(HttpStatus.GONE).body(Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.GONE.value(),
+                "error", "Gone",
+                "message", ex.getMessage()
+        ));
+    }
 
     @ExceptionHandler(CustomAliasAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleCustomAliasAlreadyExists(CustomAliasAlreadyExistsException ex) {

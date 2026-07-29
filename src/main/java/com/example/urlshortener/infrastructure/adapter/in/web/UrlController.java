@@ -19,7 +19,7 @@ public class UrlController {
 
     @PostMapping({"/api/v1/urls", "/api/v1/urls/shorten"})
     public ResponseEntity<ShortenUrlResponse> shortenUrl(@RequestBody ShortenUrlRequest request, HttpServletRequest httpRequest) {
-        UrlMapping mapping = urlShortenerService.shortenUrl(request.getOriginalUrl(), request.getCustomAlias());
+        UrlMapping mapping = urlShortenerService.shortenUrl(request.getOriginalUrl(), request.getCustomAlias(), request.getExpiresAt());
         String baseUrl = httpRequest.getRequestURL().toString().replace(httpRequest.getRequestURI(), "");
         String shortUrl = baseUrl + "/" + mapping.getShortCode();
 
@@ -27,9 +27,16 @@ public class UrlController {
                 .originalUrl(mapping.getOriginalUrl())
                 .shortCode(mapping.getShortCode())
                 .shortUrl(shortUrl)
+                .expiresAt(mapping.getExpiresAt())
                 .build();
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @DeleteMapping("/api/v1/urls/{shortCode}")
+    public ResponseEntity<Void> deleteUrl(@PathVariable String shortCode) {
+        urlShortenerService.deleteUrl(shortCode);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{shortCode}")

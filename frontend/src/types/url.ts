@@ -3,12 +3,14 @@ export interface UrlMapping {
   originalUrl: string;
   shortCode: string;
   createdAt: string;
+  expiresAt?: string;
   clickCount: number;
 }
 
 export interface UrlShortenRequest {
   originalUrl: string;
   customAlias?: string;
+  expiresAt?: string;
 }
 
 export interface UrlStatsResponse {

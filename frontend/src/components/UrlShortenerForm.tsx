@@ -1,18 +1,31 @@
-import React, { useState } from 'react';
-import { ArrowRight, Link2, Sparkles, AlertCircle, ShieldCheck, Tag } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowRight, Link2, Sparkles, AlertCircle, ShieldCheck, Tag, Clock } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { shortenUrlApi } from '../services/api';
 import type { UrlMapping } from '../types/url';
 
 interface UrlShortenerFormProps {
   onUrlShortened: (mapping: UrlMapping) => void;
+  initialUrl?: string;
+  initialAlias?: string;
 }
 
-export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShortened }) => {
-  const [url, setUrl] = useState('');
-  const [customAlias, setCustomAlias] = useState('');
+export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({
+  onUrlShortened,
+  initialUrl = '',
+  initialAlias = '',
+}) => {
+  const [url, setUrl] = useState(initialUrl);
+  const [customAlias, setCustomAlias] = useState(initialAlias);
+  const [expirationOption, setExpirationOption] = useState<'24h' | '7d' | '30d' | 'custom'>('30d');
+  const [customDate, setCustomDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialUrl) setUrl(initialUrl);
+    if (initialAlias) setCustomAlias(initialAlias);
+  }, [initialUrl, initialAlias]);
 
   const isValidUrl = (string: string) => {
     try {
@@ -21,6 +34,27 @@ export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShorten
     } catch {
       return false;
     }
+  };
+
+  const getExpirationIso = (): string => {
+    const now = new Date();
+
+    if (expirationOption === '24h') {
+      const exp = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      return exp.toISOString();
+    }
+    if (expirationOption === '7d') {
+      const exp = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      return exp.toISOString();
+    }
+    if (expirationOption === 'custom' && customDate) {
+      const exp = new Date(customDate);
+      return exp.toISOString();
+    }
+
+    // Default to 30 days
+    const exp = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    return exp.toISOString();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,10 +82,30 @@ export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShorten
       return;
     }
 
+    const expiresAtIso = getExpirationIso();
+    if (expirationOption === 'custom') {
+      if (!customDate) {
+        setError('Please select a valid custom expiration date.');
+        return;
+      }
+      const selected = new Date(customDate);
+      const now = new Date();
+      const max6Months = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000);
+
+      if (selected <= now) {
+        setError('Expiration date must be in the future.');
+        return;
+      }
+      if (selected > max6Months) {
+        setError('Expiration date cannot exceed 6 months from today.');
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
-      const mapping = await shortenUrlApi(urlToSubmit, customAlias.trim());
+      const mapping = await shortenUrlApi(urlToSubmit, customAlias.trim(), expiresAtIso);
       
       // Trigger Confetti effect on success
       confetti({
@@ -64,6 +118,8 @@ export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShorten
       onUrlShortened(mapping);
       setUrl('');
       setCustomAlias('');
+      setExpirationOption('30d');
+      setCustomDate('');
     } catch (err: any) {
       setError(err?.message || 'An error occurred while shortening the URL. Please try again.');
       console.error(err);
@@ -72,8 +128,19 @@ export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShorten
     }
   };
 
+  const getMinCustomDate = () => {
+    const now = new Date();
+    return now.toISOString().slice(0, 16);
+  };
+
+  const getMaxCustomDate = () => {
+    const max = new Date();
+    max.setMonth(max.getMonth() + 6);
+    return max.toISOString().slice(0, 16);
+  };
+
   return (
-    <div className="w-full max-w-4xl mx-auto my-12 px-4">
+    <div id="shortener-form" className="w-full max-w-4xl mx-auto my-12 px-4">
       {/* Hero Header */}
       <div className="text-center mb-10">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold uppercase tracking-wider mb-4">
@@ -129,9 +196,11 @@ export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShorten
             </button>
           </div>
 
-          {/* Optional Custom Alias Input */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-            <div className="relative w-full sm:w-1/2">
+          {/* Custom Alias & Expiration Options Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            
+            {/* Custom Alias Input */}
+            <div className="relative w-full">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                 <Tag className="w-4 h-4 text-purple-400" />
               </div>
@@ -144,13 +213,53 @@ export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShorten
               />
             </div>
 
-            {customAlias.trim() && (
-              <div className="text-xs text-purple-400 font-mono flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                <span>Preview:</span>
-                <span className="font-bold text-white">url.doblas.dev/{customAlias.trim()}</span>
+            {/* Expiration Date Selector */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-purple-400" />
+                <span className="text-xs text-slate-400 font-medium">Link Expiration (Max 6 Months):</span>
               </div>
-            )}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[
+                  { id: '30d', label: '30 Days (Default)' },
+                  { id: '24h', label: '24 Hours' },
+                  { id: '7d', label: '7 Days' },
+                  { id: 'custom', label: 'Custom' },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setExpirationOption(opt.id as any)}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      expirationOption === opt.id
+                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                        : 'bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {expirationOption === 'custom' && (
+                <input
+                  type="datetime-local"
+                  value={customDate}
+                  min={getMinCustomDate()}
+                  max={getMaxCustomDate()}
+                  onChange={(e) => setCustomDate(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 rounded-xl bg-slate-900/80 border border-slate-700 text-xs text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                />
+              )}
+            </div>
           </div>
+
+          {customAlias.trim() && (
+            <div className="text-xs text-purple-400 font-mono flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 w-fit">
+              <span>Preview:</span>
+              <span className="font-bold text-white">url.doblas.dev/{customAlias.trim()}</span>
+            </div>
+          )}
 
           {error && (
             <div className="mt-4 flex items-center gap-2 text-rose-400 text-sm bg-rose-500/10 border border-rose-500/20 px-4 py-3 rounded-xl">
@@ -164,7 +273,7 @@ export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShorten
         <div className="mt-8 pt-6 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-slate-400 font-medium">
           <div className="flex items-center justify-center sm:justify-start gap-2">
             <ShieldCheck className="w-4 h-4 text-indigo-400" />
-            <span>Custom Aliases & Base62</span>
+            <span>Custom Expiration & Aliases</span>
           </div>
           <div className="flex items-center justify-center gap-2">
             <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
