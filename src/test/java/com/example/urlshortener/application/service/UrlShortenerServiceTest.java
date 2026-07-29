@@ -96,8 +96,11 @@ class UrlShortenerServiceTest {
         }
 
         @Override
-        public Optional<UrlMapping> findById(Long id) {
-            return db.values().stream().filter(m -> m.getId().equals(id)).findFirst();
+        public void incrementClickCount(String shortCode) {
+            UrlMapping mapping = db.get(shortCode);
+            if (mapping != null) {
+                mapping.setClickCount(mapping.getClickCount() + 1);
+            }
         }
     }
 
@@ -112,11 +115,6 @@ class UrlShortenerServiceTest {
         @Override
         public void put(String shortCode, String originalUrl) {
             cache.put(shortCode, originalUrl);
-        }
-
-        @Override
-        public void evict(String shortCode) {
-            cache.remove(shortCode);
         }
     }
 
