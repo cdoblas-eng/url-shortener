@@ -1,4 +1,4 @@
-package com.example.urlshortener.infrastructure.adapter.in/web;
+package com.example.urlshortener.infrastructure.adapter.in.web;
 
 import com.example.urlshortener.domain.exception.CustomAliasAlreadyExistsException;
 import com.example.urlshortener.domain.exception.InvalidCustomAliasException;
