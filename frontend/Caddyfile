@@ -16,7 +16,7 @@
     }
 
     # Proxy short URL redirection codes (e.g., /b, /x7z) to Spring Boot
-    @shortCodePath path_regexp shortCode ^/[a-zA-Z0-9]+$
+    @shortCodePath path_regexp shortCode ^/[a-zA-Z0-9_-]+$
     handle @shortCodePath {
         reverse_proxy app:8080
     }
