@@ -59,6 +59,7 @@ jobs:
           host: ${{ secrets.VPS_HOST || '178.18.245.9' }}
           username: ${{ secrets.VPS_USERNAME || 'root' }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
           script: |
             cd /opt/url-shortener
             git pull origin main
