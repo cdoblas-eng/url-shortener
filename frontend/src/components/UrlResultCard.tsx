@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Copy, Check, ExternalLink, QrCode, Download, BarChart2 } from 'lucide-react';
+import { Copy, Check, ExternalLink, QrCode, Download, BarChart2, Share2 } from 'lucide-react';
 import type { UrlMapping } from '../types/url';
 
 interface UrlResultCardProps {
@@ -10,6 +10,7 @@ interface UrlResultCardProps {
 
 export const UrlResultCard: React.FC<UrlResultCardProps> = ({ mapping, onViewAnalytics }) => {
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const [showQr, setShowQr] = useState(false);
 
   // Constructs full short URL (or uses host window origin)
@@ -19,6 +20,25 @@ export const UrlResultCard: React.FC<UrlResultCardProps> = ({ mapping, onViewAna
     navigator.clipboard.writeText(fullShortUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'NanoLink Short URL',
+          text: `Here is your shortened link: ${fullShortUrl}`,
+          url: fullShortUrl,
+        });
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      } catch (err) {
+        console.log('Share dismissed:', err);
+      }
+    } else {
+      // Fallback: Copy to clipboard if Web Share API is unavailable
+      handleCopy();
+    }
   };
 
   const downloadQrCode = () => {
@@ -43,40 +63,56 @@ export const UrlResultCard: React.FC<UrlResultCardProps> = ({ mapping, onViewAna
 
   return (
     <div className="w-full max-w-4xl mx-auto mb-10 px-4">
-      <div className="glass-card glass-card-hover rounded-3xl p-6 sm:p-8 border border-purple-500/30 relative">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="glass-card glass-card-hover rounded-3xl p-5 sm:p-8 border border-purple-500/30 relative">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           
           {/* Main Info */}
-          <div className="space-y-2 flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+          <div className="space-y-2 flex-1 min-w-0 w-full">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
                 Created & Cached in Redis
               </span>
               <span className="text-xs text-slate-500 font-mono">ID: #{mapping.id || 'N/A'}</span>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 w-full overflow-hidden">
               <a
                 href={fullShortUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-2xl font-bold font-mono text-purple-300 hover:text-purple-200 transition-colors flex items-center gap-2 truncate"
+                className="text-xl sm:text-2xl font-bold font-mono text-purple-300 hover:text-purple-200 transition-colors flex items-center gap-2 truncate max-w-full"
               >
-                <span>{fullShortUrl}</span>
-                <ExternalLink className="w-5 h-5 flex-shrink-0 text-purple-400" />
+                <span className="truncate">{fullShortUrl}</span>
+                <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 text-purple-400" />
               </a>
             </div>
 
-            <p className="text-slate-400 text-sm truncate max-w-xl">
+            <p className="text-slate-400 text-xs sm:text-sm truncate max-w-full">
               <span className="text-slate-500">Destination:</span> {mapping.originalUrl}
             </p>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          {/* Action Buttons Grid on Mobile */}
+          <div className="grid grid-cols-2 sm:flex items-center gap-2.5 w-full lg:w-auto">
+            
+            {/* Share Button */}
+            <button
+              onClick={handleShare}
+              className={`px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all ${
+                shared
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30'
+              }`}
+              title="Share short URL"
+            >
+              <Share2 className="w-4 h-4 text-indigo-400" />
+              <span>{shared ? 'Shared!' : 'Share'}</span>
+            </button>
+
+            {/* Copy Button */}
             <button
               onClick={handleCopy}
-              className={`flex-1 md:flex-none px-5 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200 ${
+              className={`px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200 ${
                 copied
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
@@ -95,6 +131,7 @@ export const UrlResultCard: React.FC<UrlResultCardProps> = ({ mapping, onViewAna
               )}
             </button>
 
+            {/* QR Code Button */}
             <button
               onClick={() => setShowQr(!showQr)}
               className="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-medium flex items-center justify-center gap-2 transition-all"
@@ -103,6 +140,7 @@ export const UrlResultCard: React.FC<UrlResultCardProps> = ({ mapping, onViewAna
               <span>QR Code</span>
             </button>
 
+            {/* Stats Button */}
             <button
               onClick={() => onViewAnalytics(mapping.shortCode)}
               className="px-4 py-3 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-sm font-medium flex items-center justify-center gap-2 transition-all"
@@ -110,13 +148,14 @@ export const UrlResultCard: React.FC<UrlResultCardProps> = ({ mapping, onViewAna
               <BarChart2 className="w-4 h-4 text-purple-400" />
               <span>Stats</span>
             </button>
+
           </div>
         </div>
 
         {/* QR Code Expandable Modal / Drawer */}
         {showQr && (
           <div className="mt-6 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center gap-6 bg-slate-900/60 p-6 rounded-2xl">
-            <div className="bg-white p-4 rounded-xl shadow-lg">
+            <div className="bg-white p-4 rounded-xl shadow-lg flex-shrink-0">
               <QRCodeSVG
                 id={`qr-code-${mapping.shortCode}`}
                 value={fullShortUrl}
