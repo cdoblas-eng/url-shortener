@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, Link2, Sparkles, AlertCircle, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Link2, Sparkles, AlertCircle, ShieldCheck, Tag } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { shortenUrlApi } from '../services/api';
 import type { UrlMapping } from '../types/url';
@@ -10,6 +10,7 @@ interface UrlShortenerFormProps {
 
 export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShortened }) => {
   const [url, setUrl] = useState('');
+  const [customAlias, setCustomAlias] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,10 +43,15 @@ export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShorten
       return;
     }
 
+    if (customAlias.trim() && !/^[a-zA-Z0-9_-]{3,30}$/.test(customAlias.trim())) {
+      setError('Custom alias must be 3-30 characters long and contain only letters, numbers, hyphens, or underscores.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const mapping = await shortenUrlApi(urlToSubmit);
+      const mapping = await shortenUrlApi(urlToSubmit, customAlias.trim());
       
       // Trigger Confetti effect on success
       confetti({
@@ -57,8 +63,9 @@ export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShorten
 
       onUrlShortened(mapping);
       setUrl('');
-    } catch (err) {
-      setError('An error occurred while shortening the URL. Please try again.');
+      setCustomAlias('');
+    } catch (err: any) {
+      setError(err?.message || 'An error occurred while shortening the URL. Please try again.');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -86,7 +93,9 @@ export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShorten
         <div className="absolute -top-24 -right-24 w-60 h-60 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 w-60 h-60 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
 
-        <form onSubmit={handleSubmit} className="relative z-10">
+        <form onSubmit={handleSubmit} className="relative z-10 space-y-4">
+          
+          {/* Main URL Input */}
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="relative w-full">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
@@ -120,6 +129,29 @@ export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShorten
             </button>
           </div>
 
+          {/* Optional Custom Alias Input */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+            <div className="relative w-full sm:w-1/2">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <Tag className="w-4 h-4 text-purple-400" />
+              </div>
+              <input
+                type="text"
+                value={customAlias}
+                onChange={(e) => setCustomAlias(e.target.value)}
+                placeholder="Custom alias (optional, e.g. my-custom-alias)"
+                className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-sm text-purple-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500/60 font-mono transition-all"
+              />
+            </div>
+
+            {customAlias.trim() && (
+              <div className="text-xs text-purple-400 font-mono flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                <span>Preview:</span>
+                <span className="font-bold text-white">url.doblas.dev/{customAlias.trim()}</span>
+              </div>
+            )}
+          </div>
+
           {error && (
             <div className="mt-4 flex items-center gap-2 text-rose-400 text-sm bg-rose-500/10 border border-rose-500/20 px-4 py-3 rounded-xl">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -132,7 +164,7 @@ export const UrlShortenerForm: React.FC<UrlShortenerFormProps> = ({ onUrlShorten
         <div className="mt-8 pt-6 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-slate-400 font-medium">
           <div className="flex items-center justify-center sm:justify-start gap-2">
             <ShieldCheck className="w-4 h-4 text-indigo-400" />
-            <span>Collision-Resistant Base62</span>
+            <span>Custom Aliases & Base62</span>
           </div>
           <div className="flex items-center justify-center gap-2">
             <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>

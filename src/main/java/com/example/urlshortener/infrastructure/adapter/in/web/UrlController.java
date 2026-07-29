@@ -19,7 +19,7 @@ public class UrlController {
 
     @PostMapping({"/api/v1/urls", "/api/v1/urls/shorten"})
     public ResponseEntity<ShortenUrlResponse> shortenUrl(@RequestBody ShortenUrlRequest request, HttpServletRequest httpRequest) {
-        UrlMapping mapping = urlShortenerService.shortenUrl(request.getOriginalUrl());
+        UrlMapping mapping = urlShortenerService.shortenUrl(request.getOriginalUrl(), request.getCustomAlias());
         String baseUrl = httpRequest.getRequestURL().toString().replace(httpRequest.getRequestURI(), "");
         String shortUrl = baseUrl + "/" + mapping.getShortCode();
 

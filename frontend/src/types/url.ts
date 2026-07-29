@@ -8,6 +8,7 @@ export interface UrlMapping {
 
 export interface UrlShortenRequest {
   originalUrl: string;
+  customAlias?: string;
 }
 
 export interface UrlStatsResponse {

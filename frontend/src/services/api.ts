@@ -2,26 +2,39 @@ import type { UrlMapping, UrlStatsResponse } from '../types/url';
 
 const API_BASE = '/api/v1/urls';
 
-export const shortenUrlApi = async (originalUrl: string): Promise<UrlMapping> => {
+export const shortenUrlApi = async (originalUrl: string, customAlias?: string): Promise<UrlMapping> => {
   try {
     const response = await fetch(`${API_BASE}/shorten`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ originalUrl }),
+      body: JSON.stringify({
+        originalUrl,
+        customAlias: customAlias && customAlias.trim().length > 0 ? customAlias.trim() : undefined,
+      }),
     });
 
     if (!response.ok) {
+      const errorJson = await response.json().catch(() => null);
+      if (errorJson && errorJson.message) {
+        throw new Error(errorJson.message);
+      }
       throw new Error(`Failed to shorten URL: ${response.statusText}`);
     }
 
     return await response.json();
-  } catch (error) {
+  } catch (error: any) {
+    if (error && error.message && !error.message.includes('Failed to fetch') && !error.message.includes('NetworkError')) {
+      throw error;
+    }
+
     console.warn('Backend API unavailable, using client-side fallback mode:', error);
     
-    // Client-side fallback / Demo mode if backend is not reachable locally
-    const mockShortCode = Math.random().toString(36).substring(2, 8);
+    const mockShortCode = customAlias && customAlias.trim().length > 0
+      ? customAlias.trim()
+      : Math.random().toString(36).substring(2, 8);
+
     const mockMapping: UrlMapping = {
       id: Math.floor(Math.random() * 1000) + 1,
       originalUrl,
@@ -30,7 +43,6 @@ export const shortenUrlApi = async (originalUrl: string): Promise<UrlMapping> =>
       clickCount: 0,
     };
 
-    // Store in localStorage for persistent demo session
     const existingStr = localStorage.getItem('demo_url_mappings');
     const existing: UrlMapping[] = existingStr ? JSON.parse(existingStr) : [];
     localStorage.setItem('demo_url_mappings', JSON.stringify([mockMapping, ...existing]));

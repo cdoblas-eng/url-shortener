@@ -9,4 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ShortenUrlRequest {
     private String originalUrl;
+    private String customAlias;
 }
